@@ -11,6 +11,8 @@ type Xxx struct {
 	X       string   `xml:"xyz"`
 }
 
+type Yyy struct{}
+
 func main() {
 	e :=
 		x.E("Foo", x.NoAttrs(),
@@ -22,10 +24,16 @@ func main() {
 			),
 			// Defaults to encoding/xml marshalling where desired
 			&Xxx{X: "test"},
+			// Use a custom ToElement() func
+			&Yyy{},
 		)
 	if err := e.Marshal(os.Stdout); err != nil {
 		panic(err)
 	}
+}
+
+func (*Yyy) ToElement() *x.Element {
+	return x.E("thisisatest", x.NoAttrs())
 }
 
 /*
@@ -36,5 +44,6 @@ $ go run main.go | xmllint --format -
   <abc xmlns="http://something/">
     <xyz>test</xyz>
   </abc>
+  <thisisatest/>
 </Foo>
 */

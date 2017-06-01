@@ -15,6 +15,10 @@ type Element struct {
 	Contents []interface{}
 }
 
+type Elementifiable interface {
+	ToElement() *Element
+}
+
 func E(name string, attrs map[string]interface{}, contents ...interface{}) *Element {
 	return &Element{
 		Name:     name,
@@ -90,6 +94,12 @@ func (e *Element) doMarshal(w io.Writer, curPath []string) (err error, pathOfErr
 					return
 				}
 			default:
+				el, ok := c.(Elementifiable)
+				if ok {
+					if err, pathOfError = el.ToElement().doMarshal(w, curPath); err != nil {
+						return
+					}
+				}
 				if err = writeEscaped(w, c); err != nil {
 					return
 				}
