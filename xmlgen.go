@@ -51,6 +51,9 @@ func (e *Element) doMarshal(w io.Writer, curPath []string) (err error, pathOfErr
 	curPath = append(curPath, e.Name)
 	pathOfError = curPath
 
+	// N.B. all 'return's indicate an error condition (except for the final
+	// line of course)
+
 	if !validName(e.Name) {
 		err = errors.New("Invalid name for tag: " + e.Name)
 		return
@@ -94,13 +97,13 @@ func (e *Element) doMarshal(w io.Writer, curPath []string) (err error, pathOfErr
 					return
 				}
 			default:
+				// Is it an element, or something we should simply try to serialise?
 				el, ok := c.(Elementifiable)
 				if ok {
 					if err, pathOfError = el.ToElement().doMarshal(w, curPath); err != nil {
 						return
 					}
-				}
-				if err = writeEscaped(w, c); err != nil {
+				} else if err = writeEscaped(w, c); err != nil {
 					return
 				}
 			}
@@ -132,14 +135,7 @@ func writeEscaped(w io.Writer, v interface{}) error {
 		_, err := w.Write([]byte(fmt.Sprintf("%f", v)))
 		return err
 	default:
-		// By default, defer to xml.Marshal. Bad idea?
-		bs, err := xml.Marshal(v)
-		if err != nil {
-			return errors.New(fmt.Sprintf("Unable to write: %#v", v))
-		}
-		if _, err := w.Write(bs); err != nil {
-			return err
-		}
+		return errors.New(fmt.Sprintf("Unable to write: %#v", v))
 	}
 	return nil
 }
